@@ -1,10 +1,12 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,13 +14,23 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Eduardo on 9/24/2016.
  */
 public class CrimeListFragment extends Fragment {
+
+    // Both constants for Challenge
+    private static final String TAG = "CrimeListFragment";
+    private static final int REQUEST_CRIME = 1;
+
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+
+    // for Challenge
+    private boolean mItemhasChanged = false;
+    private UUID mItemChangedId;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -48,7 +60,32 @@ public class CrimeListFragment extends Fragment {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
-            mAdapter.notifyDataSetChanged();
+            // Challenege all if statement and context is new
+            if (mItemhasChanged) {
+                int mItemChangedPosition = mAdapter.getCrimeIndex(mItemChangedId);
+                Log.d(TAG, "Changed position :" + mItemChangedPosition);
+                mAdapter.notifyItemChanged(mItemChangedPosition);
+            }
+            // mAdapter.notifyDataSetChanged(); no if statment nor context before Challenege
+        }
+    }
+
+    // All new for Challenege
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult: ");
+        if (resultCode != Activity.RESULT_OK) {
+            mItemhasChanged = false;
+            Log.d(TAG, "not OK: " + resultCode);
+            return;
+        }
+
+        if (requestCode == REQUEST_CRIME) {
+            if (data != null) {
+                Log.d(TAG, "data != null");
+                mItemhasChanged = CrimeActivity.hasCrimeChanged(data);
+                mItemChangedId = CrimeActivity.getCrimeId(data);
+            }
         }
     }
 
@@ -112,6 +149,17 @@ public class CrimeListFragment extends Fragment {
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        // All new for Challenge
+        private int getCrimeIndex(UUID crimeId) {
+            for (int i = 0; i < mCrimes.size(); i++) {
+                Crime crime = mCrimes.get(i);
+                if (crime.getId().equals(crimeId)) {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }

@@ -23,4 +23,15 @@ public class CrimeActivity extends SingleFragmentActivity {
                 .getSerializableExtra(EXTRA_CRIME_ID);
         return CrimeFragment.newInstance(crimeID);
     }
+
+    // Challenge
+    public static boolean hasCrimeChanged(Intent result) {
+        return CrimeFragment.hasCrimeChanged(result);
+    }
+
+    // Challenge
+    public static UUID getCrimeId(Intent result) {
+        return CrimeFragment.getCrimeId(result);
+    }
+
 }

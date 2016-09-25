@@ -1,5 +1,7 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
@@ -22,6 +24,12 @@ import java.util.UUID;
 public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
+    private static final String HAS_CRIME_CHANGED =
+            "com.example.marco.criminalintent.has_crime_changed";
+            // HAS_CRIME_CHANGED constant for Challenege
+
+    // Challenege
+    private boolean mHasCrimeChanged = false;
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -35,6 +43,24 @@ public class CrimeFragment extends Fragment {
         CrimeFragment fragment = new CrimeFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    // Challenge
+    public static boolean hasCrimeChanged(Intent result) {
+        return result.getBooleanExtra(HAS_CRIME_CHANGED, false);
+    }
+
+    // Challenge
+    public static UUID getCrimeId(Intent result) {
+        return (UUID) result.getSerializableExtra(ARG_CRIME_ID);
+    }
+
+    // Challenge
+    private void returnResult() {
+        Intent data = new Intent();
+        data.putExtra(HAS_CRIME_CHANGED, mHasCrimeChanged);
+        data.putExtra(ARG_CRIME_ID, mCrime.getId());
+        getActivity().setResult(Activity.RESULT_OK, data);
     }
 
     @Override
@@ -79,6 +105,10 @@ public class CrimeFragment extends Fragment {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // Set the crime's solved property
                 mCrime.setSolved(isChecked);
+
+                // Challenege
+                mHasCrimeChanged = true;
+                returnResult();
             }
         });
 
