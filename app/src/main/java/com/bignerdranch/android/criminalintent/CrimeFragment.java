@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -14,7 +15,6 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -24,12 +24,9 @@ import java.util.UUID;
 public class CrimeFragment extends Fragment {
 
     private static final String ARG_CRIME_ID = "crime_id";
-    private static final String HAS_CRIME_CHANGED =
-            "com.example.marco.criminalintent.has_crime_changed";
-            // HAS_CRIME_CHANGED constant for Challenege
+    private static final String DIALOG_DATE = "DialogDate";
 
-    // Challenege
-    private boolean mHasCrimeChanged = false;
+    private static final int REQUEST_DATE = 0;
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -43,24 +40,6 @@ public class CrimeFragment extends Fragment {
         CrimeFragment fragment = new CrimeFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    // Challenge
-    public static boolean hasCrimeChanged(Intent result) {
-        return result.getBooleanExtra(HAS_CRIME_CHANGED, false);
-    }
-
-    // Challenge
-    public static UUID getCrimeId(Intent result) {
-        return (UUID) result.getSerializableExtra(ARG_CRIME_ID);
-    }
-
-    // Challenge
-    private void returnResult() {
-        Intent data = new Intent();
-        data.putExtra(HAS_CRIME_CHANGED, mHasCrimeChanged);
-        data.putExtra(ARG_CRIME_ID, mCrime.getId());
-        getActivity().setResult(Activity.RESULT_OK, data);
     }
 
     @Override
@@ -80,7 +59,7 @@ public class CrimeFragment extends Fragment {
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // This space inentionally left blank
+                // This space intentionally left blank
             }
 
             @Override
@@ -95,8 +74,17 @@ public class CrimeFragment extends Fragment {
         });
 
         mDateButton = (Button) v.findViewById(R.id.crime_date);;
-        mDateButton.setText(DateFormat.getDateInstance().format(new Date()));
-        mDateButton.setEnabled(false);
+        updateDate(); //mDateButton.setText(DateFormat.getDateInstance().format(new Date()));
+        mDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager manager = getFragmentManager();
+                DatePickerFragment dialog = DatePickerFragment
+                        .newInstance(mCrime.getDate());
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+                dialog.show(manager, DIALOG_DATE);
+            }
+        });
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
@@ -105,13 +93,27 @@ public class CrimeFragment extends Fragment {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // Set the crime's solved property
                 mCrime.setSolved(isChecked);
-
-                // Challenege
-                mHasCrimeChanged = true;
-                returnResult();
             }
         });
 
         return v;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        if (requestCode == REQUEST_DATE) {
+            Date date = (Date) data
+                    .getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+            mCrime.setDate(date);
+            updateDate();
+        }
+    }
+
+    private void updateDate() {
+        mDateButton.setText(mCrime.getDate().toString());
     }
 }
