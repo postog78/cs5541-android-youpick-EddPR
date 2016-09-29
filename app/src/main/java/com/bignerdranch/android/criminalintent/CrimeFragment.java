@@ -77,7 +77,7 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        mDateButton = (Button) v.findViewById(R.id.crime_date);;
+        mDateButton = (Button) v.findViewById(R.id.crime_date);
         updateDate(); //mDateButton.setText(DateFormat.getDateInstance().format(new Date()));
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,7 +90,7 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        mTimeButton = (Button) v.findViewById(R.id.crime_time);;
+        mTimeButton = (Button) v.findViewById(R.id.crime_time);
         updateTime();
         mTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,13 +122,16 @@ public class CrimeFragment extends Fragment {
             return;
         }
 
-        Date date = (Date) data
-                .getSerializableExtra(DatePickerFragment.EXTRA_DATE);
-        mCrime.setDate(date);
 
         if (requestCode == REQUEST_DATE) {
+            Date date = (Date) data
+                    .getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+            mCrime.setDate(date);
             updateDate();
         } else if (requestCode == REQUEST_TIME) {
+            Date date = (Date) data
+                    .getSerializableExtra(TimePickerFragment.EXTRA_TIME);
+            mCrime.setDate(date);
             updateTime();
         }
     }
