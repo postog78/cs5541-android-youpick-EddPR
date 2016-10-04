@@ -47,6 +47,7 @@ public class CrimeFragment extends Fragment {
     private CheckBox mSolvedCheckBox;
     private Button mReportButton;
     private Button mSuspectButton;
+    private Button mCallSuspectButton;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -183,10 +184,47 @@ public class CrimeFragment extends Fragment {
             mSuspectButton.setText(mCrime.getSuspect());
         }
 
+        mCallSuspectButton = (Button) v.findViewById(R.id.call_suspect) ;
+        mCallSuspectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri contactUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+                String selectClause = ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?";
+                String[] queryFields = {
+                        ContactsContract.CommonDataKinds.Phone.NUMBER
+                };
+                String[] selectParams = {
+                        Long.toString(mCrime.getContactId())
+                };
+
+                Cursor c = getActivity().getContentResolver()
+                        .query(contactUri, queryFields, selectClause, selectParams, null);
+
+                if (c != null && c.getCount() > 0) {
+                    try {
+                        c.moveToFirst();
+                        String number = c.getString(0);
+                        Uri phoneNumber = Uri.parse("tel:" + number);
+                        Intent intent = new Intent(Intent.ACTION_DIAL, phoneNumber);
+                        startActivity(intent);
+                    } finally {
+                        c.close();
+                    }
+                }
+            }
+        });
+
+        if (mCrime.getSuspect() != null) {
+            mCallSuspectButton.setText("Call " + mCrime.getSuspect());
+        } else if (mCrime.getSuspect() == null) {
+            mCallSuspectButton.setEnabled(false);
+        }
+
         PackageManager packageManager = getActivity().getPackageManager();
         if (packageManager.resolveActivity(pickContact,
                 PackageManager.MATCH_DEFAULT_ONLY) == null) {
             mSuspectButton.setEnabled(false);
+            mCallSuspectButton.setEnabled(false);
         }
 
         return v;
@@ -214,7 +252,8 @@ public class CrimeFragment extends Fragment {
             // Specify which queries you want your query to return
             // values for.
             String[] queryFields = new String[] {
-                    ContactsContract.Contacts.DISPLAY_NAME
+                    ContactsContract.Contacts.DISPLAY_NAME,
+                    ContactsContract.Contacts._ID
             };
             // Perform your query - the contactUri is like a "where"
             // clause here.
@@ -231,8 +270,12 @@ public class CrimeFragment extends Fragment {
                 // that is your suspects name.
                 c.moveToFirst();
                 String suspect = c.getString(0);
+                long contactId = c.getLong(1);
                 mCrime.setSuspect(suspect);
+                mCrime.setContactId(contactId);
                 mSuspectButton.setText(suspect);
+                mCallSuspectButton.setText("Call " + suspect);
+                mCallSuspectButton.setEnabled(true);
             } finally {
                 c.close();
             }
@@ -265,7 +308,7 @@ public class CrimeFragment extends Fragment {
         if (suspect == null) {
             suspect = getString(R.string.crime_report_no_suspect);
         } else {
-            suspect = getString(R.string.crime_report_suspect);
+            suspect = getString(R.string.crime_report_suspect, suspect);
         }
 
         String report = getString(R.string.crime_report,
