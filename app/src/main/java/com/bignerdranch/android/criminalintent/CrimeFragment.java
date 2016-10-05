@@ -10,6 +10,7 @@ import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -39,6 +40,7 @@ public class CrimeFragment extends Fragment {
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_CONTACT = 2;
+    private static final int REQUEST_CONTACT_PERMISSION = 3;
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -188,27 +190,35 @@ public class CrimeFragment extends Fragment {
         mCallSuspectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Uri contactUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-                String selectClause = ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?";
-                String[] queryFields = {
-                        ContactsContract.CommonDataKinds.Phone.NUMBER
-                };
-                String[] selectParams = {
-                        Long.toString(mCrime.getContactId())
-                };
+                if (ContextCompat.checkSelfPermission(getActivity(), android.Manifest.permission.READ_CONTACTS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{android.Manifest
+                            .permission
+                            .READ_CONTACTS}, REQUEST_CONTACT_PERMISSION);
 
-                Cursor c = getActivity().getContentResolver()
-                        .query(contactUri, queryFields, selectClause, selectParams, null);
+                } else {
+                    Uri contactUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+                    String selectClause = ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?";
+                    String[] queryFields = {
+                            ContactsContract.CommonDataKinds.Phone.NUMBER
+                    };
+                    String[] selectParams = {
+                            Long.toString(mCrime.getContactId())
+                    };
 
-                if (c != null && c.getCount() > 0) {
-                    try {
-                        c.moveToFirst();
-                        String number = c.getString(0);
-                        Uri phoneNumber = Uri.parse("tel:" + number);
-                        Intent intent = new Intent(Intent.ACTION_DIAL, phoneNumber);
-                        startActivity(intent);
-                    } finally {
-                        c.close();
+                    Cursor c = getActivity().getContentResolver()
+                            .query(contactUri, queryFields, selectClause, selectParams, null);
+
+                    if (c != null && c.getCount() > 0) {
+                        try {
+                            c.moveToFirst();
+                            String number = c.getString(0);
+                            Uri phoneNumber = Uri.parse("tel:" + number);
+                            Intent intent = new Intent(Intent.ACTION_DIAL, phoneNumber);
+                            startActivity(intent);
+                        } finally {
+                            c.close();
+                        }
                     }
                 }
             }
@@ -279,6 +289,29 @@ public class CrimeFragment extends Fragment {
             } finally {
                 c.close();
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CONTACT_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mCrime.setContactId(mCrime.getContactId());
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    mCallSuspectButton.setEnabled(false);
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
         }
     }
 
