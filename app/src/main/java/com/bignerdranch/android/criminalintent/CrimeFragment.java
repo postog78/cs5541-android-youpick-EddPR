@@ -27,12 +27,10 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -69,7 +67,6 @@ public class CrimeFragment extends Fragment {
      */
     public interface Callbacks {
         void onCrimeUpdated(Crime crime);
-        void onCrimeDeleted(Crime crime);
     }
 
     public static CrimeFragment newInstance(UUID crimeId) {
@@ -122,19 +119,14 @@ public class CrimeFragment extends Fragment {
             case R.id.menu_item_delete_crime:
                 UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
                 mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
-                CrimeLab.get(getActivity()).deleteCrime(mCrime);
                 if (getActivity().findViewById(R.id.detail_fragment_container) == null) {
+                    deleteCrime();
                     getActivity().finish();
                 } else {
-                    updateCrime();
-                    List<Crime> crimes = CrimeLab.get(getActivity()).getCrimes();
-                    if (!crimes.isEmpty()) {
-                        mCallbacks.onCrimeDeleted(crimes.get(0));
-                    } else {
-                        LinearLayout detailLayout = (LinearLayout)
-                                getActivity().findViewById(R.id.fragment_crime_layout);
-                        detailLayout.setVisibility(View.GONE);
-                    }
+                    deleteCrime();
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .remove(this)
+                            .commit();
                 }
 
                 return true;
@@ -397,6 +389,11 @@ public class CrimeFragment extends Fragment {
             // other 'case' lines to check for other
             // permissions this app might request
         }
+    }
+
+    private void deleteCrime() {
+        CrimeLab.get(getActivity()).deleteCrime(mCrime);
+        mCallbacks.onCrimeUpdated(mCrime);
     }
 
     private void updateCrime() {
