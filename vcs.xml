@@ -14,6 +14,10 @@
           <option name="url" value="https://github.com/JaysGitLab/cs5541-android-youpick-EddPR.git" />
           <option name="userName" value="" />
         </UrlAndUserName>
+        <UrlAndUserName>
+          <option name="url" value="https://github.com/dragade/DragAndDraw.git" />
+          <option name="userName" value="" />
+        </UrlAndUserName>
       </list>
     </option>
     <option name="cloneParentDir" value="C:\Users\User\AndroidStudioProjects" />
